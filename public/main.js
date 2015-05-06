@@ -10,33 +10,52 @@ var renderer = PIXI.autoDetectRenderer(width, height);
 
 document.body.appendChild(renderer.view);
 
-var dodPixel = new PIXI.Graphics();
-stage.addChild(dodPixel);
-dodPixel.size = 20;
-dodPixel.position.x = width/2 - dodPixel.size/2;
-dodPixel.position.y = height/2 - dodPixel.size/2;
-dodPixel.iter = 0;
+var camera = new PIXI.DisplayObjectContainer();
+camera.position.x = width/2;
+camera.position.y = height/2;
+stage.addChild(camera);
 
+var squares = [];
+var squareNumbers = 50;
+var startColor = 0xA40CE8;
 
-console.log(dodPixel.pivot);
+for (var i=0; i<squareNumbers; i++) {
+	var mrSquare = new PIXI.Graphics();
+	mrSquare.position.x = 0;
+	mrSquare.position.y = 0;
+	mrSquare.color = startColor;
+	mrSquare.iter = 0;
+	mrSquare.size = 30;
+	camera.addChild(mrSquare);
+	squares.push(mrSquare);
+}
+
 
 function render() {
-	dodPixel.clear();
-	if (dodPixel.iter < 1000) {
-		dodPixel.beginFill(0xA40CE8);
-		dodPixel.drawRect(0,0, dodPixel.size, dodPixel.size);
-		dodPixel.endFill();
+	for (var i=0; i<squares.length; i++) {
+		rSqr = squares[i];
+		rSqr.clear();
+		if (rSqr.iter > 1000) {
+			rSqr.destroy();
+			delete squares[i];
+		} else {
+			rSqr.beginFill(rSqr.color);
+			rSqr.drawRect(-rSqr.size/2, -rSqr.size/2, rSqr.size, rSqr.size);
+			rSqr.endFill();
+			rSqr.color += rSqr.iter * Math.floor(Math.random() * (10+1));
+		}
 	}
 
 	renderer.render(stage);
 };
 
 function update(timeDelta) {
-	// dodPixel.size += 1;
-	dodPixel.position.x = width/2 - dodPixel.size/2;
-	dodPixel.position.y = height/2 - dodPixel.size/2;
-	// dodPixel.iter +=1;
-	// dodPixel.rotation +=0.1;
+	for (var i=0; i<squares.length; i++) {
+		rSqr = squares[i];
+		rSqr.rotation += 0.05;
+		rSqr.size += 0.5;
+		rSqr.iter++;
+	}
 };
 
 function main() {
@@ -54,9 +73,9 @@ console.log('start');
 
 window.addEventListener('keydown', function(e) {
 	if (e.keyCode == 32) {
-		dodPixel.size +=10;
+		mrSquare.size +=10;
 	}
-	console.log(dodPixel);
+	console.log(mrSquare);
 });
 
 },{}]},{},[1])
