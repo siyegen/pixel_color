@@ -15,46 +15,87 @@ camera.position.x = width/2;
 camera.position.y = height/2;
 stage.addChild(camera);
 
-var squares = [];
-var squareNumbers = 50;
-var startColor = 0xA40CE8;
+function MrSquare(point, size, color) {
+	this.position = point;
+	this.size = size;
+	this.color = color;
 
-for (var i=0; i<squareNumbers; i++) {
-	var mrSquare = new PIXI.Graphics();
-	mrSquare.position.x = 0;
-	mrSquare.position.y = 0;
-	mrSquare.color = startColor;
-	mrSquare.iter = 0;
-	mrSquare.size = 30;
-	camera.addChild(mrSquare);
-	squares.push(mrSquare);
+	this.ctx = new PIXI.Graphics();
+	this.ctx.position.x = point.x;
+	this.ctx.position.y = point.y;
 }
 
+function Emitter(point, delay, startColor) {
+	this.position = point;
+	this.delay = delay;
+	this.color = startColor;
+	this.emitting = false;
+	this.lastEmit = null;
+}
+
+Emitter.prototype.emit = function() {
+	var size = 30;
+	size += Math.floor(Math.random() * (50+1)); // jitter size
+	var color = this.color;
+	// step color
+	this.color += Math.floor(Math.random() * (1000+1));
+
+	return new MrSquare(this.position, size, color);
+};
+
+Emitter.prototype.queue = function() {
+	if (this.lastEmit == null) { // first emit
+		this.emitting = true;
+		this.lastEmit = Date.now();
+		return this.emit();
+	} else if (Date.now() - this.lastEmit >= this.delay) { // time to emit
+		this.emitting = true;
+		this.lastEmit = Date.now();
+		return this.emit();
+	} else {
+		return null;
+	}
+
+}
+
+var emitter = new Emitter({x:0,y:0}, 2000, 0xA40CE8);
+
+var particleNumber = 10;
+var allSquares = [];
+function addSquare() {
+	if (allSquares.length >= particleNumber) return;
+	var sq = emitter.queue();
+	if (sq !== null) {
+		console.log("adding square", Date.now());
+		allSquares.push(sq);
+		console.log(sq);
+		camera.addChild(sq.ctx);
+	}
+}
 
 function render() {
-	for (var i=0; i<squares.length; i++) {
-		rSqr = squares[i];
-		rSqr.clear();
-		if (rSqr.iter > 1000) {
-			rSqr.destroy();
-			delete squares[i];
-		} else {
-			rSqr.beginFill(rSqr.color);
-			rSqr.drawRect(-rSqr.size/2, -rSqr.size/2, rSqr.size, rSqr.size);
-			rSqr.endFill();
-			rSqr.color += rSqr.iter * Math.floor(Math.random() * (10+1));
-		}
+	for (var i=allSquares.length-1; i>=0; i--){
+		console.info("render square");
+		allSquares[i].ctx.clear();
+		allSquares[i].ctx.beginFill(allSquares[i].color);
+		allSquares[i].ctx.drawRect(
+			-allSquares[i].size/2,
+			-allSquares[i].size/2,
+			allSquares[i].size,
+			allSquares[i].size
+		);
+		allSquares[i].ctx.endFill();
 	}
 
 	renderer.render(stage);
 };
 
 function update(timeDelta) {
-	for (var i=0; i<squares.length; i++) {
-		rSqr = squares[i];
-		rSqr.rotation += 0.05;
-		rSqr.size += 0.5;
-		rSqr.iter++;
+	addSquare();
+	for (var i=allSquares.length-1; i>=0; i--){
+		if (allSquares[i].size < 1000) {
+			allSquares[i].size += 2;
+		}
 	}
 };
 
